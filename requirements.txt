@@ -1,0 +1,7 @@
+﻿flask
+requests
+pyngrok
+google-generativeai
+gunicorn
+wfastcgi
+setuptools
