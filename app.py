@@ -1,11 +1,13 @@
-import httpx
+import requests
 from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
+# from google.generativeai.types import HarmCategory, HarmBlockThreshold
+# from functions import chunk_and_store, generate_response
 import os
 
 app = Flask(__name__)
 
-telegram_bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+telegram_bot_token = os.environ.get('7810293157:AAGKQcoedECFrCf2RGzpQxhiAvZRPZq_fBs')
 GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -19,6 +21,7 @@ def message_parser(message):
         else:
             text = '__NONE__'
         
+        # Check if there is a document in the message
         if 'document' in message['message']:
             file_id = message['message']['document']['file_id']
         else:
@@ -36,16 +39,14 @@ def message_parser(message):
 
 def download_document(file_id):
     file_info_url = f'https://api.telegram.org/bot{telegram_bot_token}/getFile?file_id={file_id}'
-    with httpx.Client() as client:
-        file_info_response = client.get(file_info_url).json()
+    file_info_response = requests.get(file_info_url).json()
     
     if 'result' in file_info_response:
         file_path = file_info_response['result']['file_path']
         download_url = f'https://api.telegram.org/file/bot{telegram_bot_token}/{file_path}'
         
         # Download the file
-        with httpx.Client() as client:
-            response = client.get(download_url)
+        response = requests.get(download_url)
         
         # Save the file locally
         file_name = os.path.join('/', os.path.basename(file_path))
@@ -62,8 +63,7 @@ def send_message_telegram(chat_id, text):
         'text': text,
         'parse_mode' : 'Markdown'
     }
-    with httpx.Client() as client:
-        response = client.post(url, json=payload)
+    response = requests.post(url, json=payload)
     return response
 
 @app.route('/', methods=['GET', 'POST'])
@@ -73,7 +73,11 @@ def index():
         chat_id, incoming_que, file_id = message_parser(msg)
         if chat_id != -1:
             if file_id:
+                # Download and save the document if it exists
                 file_path = download_document(file_id)
+                # chunk the file and add to mongo db
+                # chunk_and_store(file_path)
+
                 if file_path:
                     send_message_telegram(chat_id, f"Document saved successfully: {file_path}")
                 else:
@@ -86,6 +90,7 @@ def index():
             elif incoming_que.strip() == '/chatid':
                 send_message_telegram(chat_id, f'Your chat ID is: {chat_id}')
             else:
+                # answer = generate_response(incoming_que, llm)
                 send_message_telegram(chat_id, "Echo: " + incoming_que)
         return Response('ok', status=200)
     else:

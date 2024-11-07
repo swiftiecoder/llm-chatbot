@@ -1,9 +1,10 @@
 ﻿flask
-httpx
-# requests
+# httpx
+requests
 pyngrok
-google-generativeai
+# google-generativeai
 # gunicorn
 wfastcgi
 setuptools
 langchain
+langchain-google-genai
