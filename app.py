@@ -2,7 +2,7 @@ import requests
 from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
 # from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from functions import chunk_and_store, generate_response
+# from functions import chunk_and_store, generate_response
 import os
 
 app = Flask(__name__)
@@ -76,7 +76,6 @@ def index():
                 # Download and save the document if it exists
                 file_path = download_document(file_id)
                 # chunk the file and add to mongo db
-                chunk_and_store(file_path)
 
                 if file_path:
                     send_message_telegram(chat_id, f"Document saved successfully: {file_path}")
@@ -90,8 +89,8 @@ def index():
             elif incoming_que.strip() == '/chatid':
                 send_message_telegram(chat_id, f'Your chat ID is: {chat_id}')
             else:
-                answer = generate_response(incoming_que, llm)
-                send_message_telegram(chat_id, answer)
+                # answer = generate_response(incoming_que, llm)
+                send_message_telegram(chat_id, "Echo: " + incoming_que)
         return Response('ok', status=200)
     else:
         return "<h1>GET Request Made</h1>"

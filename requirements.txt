@@ -5,5 +5,3 @@ google-generativeai
 gunicorn
 wfastcgi
 setuptools
-langchain
-pymongo
