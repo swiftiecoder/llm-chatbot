@@ -1,7 +1,8 @@
 ﻿flask
-requests
+httpx
+# requests
 pyngrok
-# google-generativeai
+google-generativeai
 # gunicorn
 wfastcgi
 setuptools
