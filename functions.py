@@ -1,6 +1,6 @@
-from langchain.document_loaders import PyMuPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import Embeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
 import os
@@ -14,7 +14,7 @@ embedding_dim = 512
 MONGO_DB_URI = os.environ.get('MONGO_DB_URI')
 
 def generate_response(query, model):
-    response = model.generate_content("Write a story about a magic backpack.")
+    response = model.generate_content(query)
     return response
 
 
@@ -38,14 +38,8 @@ def chunk_and_store(genai, file_path):
             processed_chunks.append(chunk)
 
         # Generate embeddings with Google model
-        embeddings = []
-        for text in processed_chunks:
-            embedding = genai.embed_content(
-                model="models/text-embedding-004",
-                content=text,
-                task_type="retrieval_document"
-            )
-            embeddings.append(embedding['embedding'])
+        genai_embeddings = GoogleGenerativeAIEmbeddings(model_name="text-embedding-004", dimension=embedding_dim)
+        embeddings = [genai_embeddings.embed_document(text) for text in chunks]
 
         # Initialize MongoDB client and vector store
         client = MongoClient(MONGO_DB_URI)
@@ -54,7 +48,7 @@ def chunk_and_store(genai, file_path):
         
         vector_store = MongoDBAtlasVectorSearch(
             collection=collection,
-            embedding=Embeddings(dimension=embedding_dim),  # Specify the dimension
+            embedding=genai_embeddings,
             index_name="index-vectorstores",
             relevance_score_fn="cosine"
         )
