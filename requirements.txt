@@ -8,3 +8,4 @@ setuptools
 langchain
 langchain-google-genai
 langchain-mongodb
+langchain-community
