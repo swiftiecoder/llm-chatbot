@@ -81,7 +81,7 @@ def hello():
 
 @app.route('/world', methods=['GET'])
 def world():
-    print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
+    # print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
     return "Hello world"
 
 @app.route('/', methods=['GET', 'POST'])
@@ -94,7 +94,8 @@ def index():
                 # Download and save the document if it exists
                 file_path = download_document(file_id)
                 # chunk the file and add to mongo db
-                chunk_msg = chunk_and_store(file_path)
+                # chunk_msg = chunk_and_store(file_path)
+                chunk_msg = chunk_and_store('')
 
                 if file_path:
                     send_message_telegram(chat_id, f"Document saved successfully: {chunk_msg}")
@@ -115,4 +116,4 @@ def index():
         return "<h1>GET Request Made</h1>"
 
 if __name__ == '__main__':
-    app.run(port=8000)
+    app.run(host="0.0.0.0", port=8000)
