@@ -8,3 +8,5 @@ langchain
 langchain-google-genai
 langchain-mongodb
 langchain-community
+python-dotenv
+uuid

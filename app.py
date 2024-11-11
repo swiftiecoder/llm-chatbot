@@ -3,14 +3,17 @@ from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from functions import chunk_and_store, generate_response
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 app = Flask(__name__)
 
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
-genai.configure(api_key=GOOGLE_API_KEY)
 
+genai.configure(api_key=GOOGLE_API_KEY)
 llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest")
 
 def message_parser(message):
@@ -68,6 +71,12 @@ def send_message_telegram(chat_id, text):
 
 @app.route('/hello', methods=['GET'])
 def hello():
+    print(generate_response("What is your name?", llm))
+    return "Hello world"
+
+@app.route('/world', methods=['GET'])
+def world():
+    print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
     return "Hello world"
 
 @app.route('/', methods=['GET', 'POST'])

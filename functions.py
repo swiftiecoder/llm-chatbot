@@ -3,7 +3,12 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
+from dotenv import load_dotenv
+from uuid import uuid4
 import os
+
+load_dotenv()
+
 # import nltk
 # from nltk.corpus import stopwords
 
@@ -12,13 +17,14 @@ import os
 
 embedding_dim = 512
 MONGO_DB_URI = os.environ.get('MONGO_DB_URI')
+GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
 
 def generate_response(query, model):
     response = model.generate_content(query)
-    return response
+    return response.text
 
 
-def chunk_and_store(genai, file_path):
+def chunk_and_store(file_path):
     try:
         # Load the document using PyMuPDF
         loader = PyMuPDFLoader(file_path)
@@ -38,8 +44,11 @@ def chunk_and_store(genai, file_path):
             processed_chunks.append(chunk)
 
         # Generate embeddings with Google model
-        genai_embeddings = GoogleGenerativeAIEmbeddings(model_name="text-embedding-004", dimension=embedding_dim)
-        embeddings = [genai_embeddings.embed_document(text) for text in chunks]
+        genai_embeddings = GoogleGenerativeAIEmbeddings(
+            google_api_key=GOOGLE_API_KEY, 
+            model="models/text-embedding-004", 
+            dimension=embedding_dim
+        )
 
         # Initialize MongoDB client and vector store
         client = MongoClient(MONGO_DB_URI)
@@ -49,7 +58,7 @@ def chunk_and_store(genai, file_path):
         vector_store = MongoDBAtlasVectorSearch(
             collection=collection,
             embedding=genai_embeddings,
-            index_name="index-vectorstores",
+            index_name="index-vectorstore",
             relevance_score_fn="cosine"
         )
 
@@ -57,9 +66,13 @@ def chunk_and_store(genai, file_path):
         vector_store.create_vector_search_index(dimensions=embedding_dim)
 
         # Insert documents with embeddings into the vector store
-        for i, text in enumerate(processed_chunks):
-            vector_store.add_document(id=f"doc_{i}", content=text, embedding=embeddings[i])
+        # print("chunks", chunks)
+
+        uuids = [str(uuid4()) for _ in range(len(chunks))]
+        vector_store.add_documents(documents=chunks, ids = uuids)
+
 
         return "Documents successfully embedded and stored in MongoDB."
     except Exception as e:
+        print("Exception thrown")
         return e
