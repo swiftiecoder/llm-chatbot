@@ -13,6 +13,8 @@ app = Flask(__name__)
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
 
+print("STARTING", TELEGRAM_BOT_TOKEN, GOOGLE_API_KEY)
+
 genai.configure(api_key=GOOGLE_API_KEY)
 llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest")
 
@@ -71,7 +73,10 @@ def send_message_telegram(chat_id, text):
 
 @app.route('/hello', methods=['GET'])
 def hello():
-    print(generate_response("What is your name?", llm))
+    try:
+        print(generate_response("What is your name?", llm))
+    except Exception as e:
+        print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
     return "Hello world"
 
 @app.route('/world', methods=['GET'])
