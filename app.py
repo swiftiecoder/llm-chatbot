@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 
-telegram_bot_token = os.environ.get('7810293157:AAGKQcoedECFrCf2RGzpQxhiAvZRPZq_fBs')
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -38,12 +38,12 @@ def message_parser(message):
     return chat_id, text, file_id
 
 def download_document(file_id):
-    file_info_url = f'https://api.telegram.org/bot{telegram_bot_token}/getFile?file_id={file_id}'
+    file_info_url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getFile?file_id={file_id}'
     file_info_response = requests.get(file_info_url).json()
     
     if 'result' in file_info_response:
         file_path = file_info_response['result']['file_path']
-        download_url = f'https://api.telegram.org/file/bot{telegram_bot_token}/{file_path}'
+        download_url = f'https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{file_path}'
         
         # Download the file
         response = requests.get(download_url)
@@ -57,7 +57,7 @@ def download_document(file_id):
     return None
 
 def send_message_telegram(chat_id, text):
-    url = f'https://api.telegram.org/bot{telegram_bot_token}/sendMessage'
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     payload = {
         'chat_id': chat_id,
         'text': text,
@@ -65,6 +65,10 @@ def send_message_telegram(chat_id, text):
     }
     response = requests.post(url, json=payload)
     return response
+
+@app.route('/hello', methods=['GET'])
+def hello():
+    return "Hello world"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
