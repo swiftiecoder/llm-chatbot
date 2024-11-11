@@ -7,3 +7,4 @@ wfastcgi
 setuptools
 langchain
 langchain-google-genai
+langchain-mongodb
