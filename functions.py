@@ -6,11 +6,11 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from uuid import uuid4
 import os
 
-load_dotenv()
+# load_dotenv()
 
 embedding_dim = 768
 MONGO_DB_URI = os.environ.get('MONGO_DB_URI')
