@@ -2,7 +2,7 @@ import requests
 from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from functions import generate_response
+from functions import generate_response, chunk_and_store
 # from dotenv import load_dotenv
 import os
 
@@ -73,6 +73,7 @@ def send_message_telegram(chat_id, text):
 
 @app.route('/hello', methods=['GET'])
 def hello():
+    # print("In hello")
     try:
         return generate_response("What is your name?", llm)
         # return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
@@ -83,30 +84,52 @@ def hello():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        msg = request.get_json()
-        chat_id, incoming_que, file_id = message_parser(msg)
+        try:
+            msg = request.get_json()
+            chat_id, incoming_que, file_id = message_parser(msg)
+        except Exception as e:
+            error_msg = f"Error parsing message: {e}"
+            if 'chat_id' in locals():
+                send_message_telegram(chat_id, error_msg)
+            return Response('Failed to parse message', status=400)
+        
         if chat_id != -1:
             if file_id:
-                # Download and save the document if it exists
-                file_path = download_document(file_id)
-                # chunk the file and add to mongo db
-                # chunk_msg = chunk_and_store(file_path)
-                chunk_msg = "oops"
-
-                if file_path:
-                    send_message_telegram(chat_id, f"Document saved successfully: {chunk_msg}")
-                else:
-                    send_message_telegram(chat_id, "Failed to save the document." + chunk_msg)
+                # Try downloading the document
                 try:
-                    os.remove(file_path)
-                    print("Deleting", file_path)
-                except:
-                    pass
+                    file_path = download_document(file_id)
+                    if file_path:
+                        # Process and store document chunks
+                        # Replace "oops" with actual chunking message if implemented
+                        chunk_msg = chunk_and_store(file_path)
+                        send_message_telegram(chat_id, f"Document saved successfully: {chunk_msg}")
+                    else:
+                        send_message_telegram(chat_id, "Failed to save the document.")
+                except Exception as e:
+                    send_message_telegram(chat_id, f"Error handling document download and storage: {e}")
+                
+                # Attempt to delete the file if it was saved
+                if file_path:
+                    try:
+                        os.remove(file_path)
+                        print("Deleting", file_path)
+                    except Exception as e:
+                        send_message_telegram(chat_id, f"Error deleting file: {e}")
+
             elif incoming_que.strip() == '/chatid':
-                send_message_telegram(chat_id, f'Your chat ID is: {chat_id}')
+                try:
+                    send_message_telegram(chat_id, f'Your chat ID is: {chat_id}')
+                except Exception as e:
+                    send_message_telegram(chat_id, f"Error sending chat ID: {e}")
+                    return Response('Failed to send chat ID', status=500)
             else:
-                answer = generate_response(incoming_que, llm)
-                send_message_telegram(chat_id, answer)
+                try:
+                    answer = generate_response(incoming_que, llm)
+                    send_message_telegram(chat_id, answer)
+                except Exception as e:
+                    send_message_telegram(chat_id, f"Error generating or sending response: {e}")
+                    return Response('Failed to send response', status=500)
+        
         return Response('ok', status=200)
     else:
         return "<h1>GET Request Made</h1>"
