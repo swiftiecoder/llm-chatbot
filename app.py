@@ -81,7 +81,7 @@ def hello():
 
 @app.route('/world', methods=['GET'])
 def world():
-    # print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
+    print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
     return "Hello world"
 
 @app.route('/', methods=['GET', 'POST'])
@@ -116,4 +116,4 @@ def index():
         return "<h1>GET Request Made</h1>"
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8000)
+    app.run(port=5000)
