@@ -75,7 +75,7 @@ def send_message_telegram(chat_id, text):
 def hello():
     try:
         # print(generate_response("What is your name?", llm))
-        return "f{TELEGRAM_BOT_TOKEN}  {GOOGLE_API_KEY}"
+        return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
     except Exception as e:
         print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
     return "Hello world"
