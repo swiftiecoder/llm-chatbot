@@ -74,16 +74,11 @@ def send_message_telegram(chat_id, text):
 @app.route('/hello', methods=['GET'])
 def hello():
     try:
-        print(generate_response("What is your name?", llm))
+        return generate_response("What is your name?", llm)
         # return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
     except Exception as e:
         print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
     return "Hello world"
-
-# @app.route('/world', methods=['GET'])
-# def world():
-#     print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
-#     return "Hello world"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -110,9 +105,8 @@ def index():
             elif incoming_que.strip() == '/chatid':
                 send_message_telegram(chat_id, f'Your chat ID is: {chat_id}')
             else:
-                # answer = generate_response(incoming_que, llm)
-                pass
-                # send_message_telegram(chat_id, "Echo: " + incoming_que)
+                answer = generate_response(incoming_que, llm)
+                send_message_telegram(chat_id, answer)
         return Response('ok', status=200)
     else:
         return "<h1>GET Request Made</h1>"
