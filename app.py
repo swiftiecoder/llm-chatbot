@@ -2,7 +2,7 @@ import requests
 from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from functions import chunk_and_store, generate_response
+# from functions import chunk_and_store, generate_response
 from dotenv import load_dotenv
 import os
 
@@ -74,15 +74,16 @@ def send_message_telegram(chat_id, text):
 @app.route('/hello', methods=['GET'])
 def hello():
     try:
-        print(generate_response("What is your name?", llm))
+        # print(generate_response("What is your name?", llm))
+        return "f{TELEGRAM_BOT_TOKEN}  {GOOGLE_API_KEY}"
     except Exception as e:
         print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
     return "Hello world"
 
-@app.route('/world', methods=['GET'])
-def world():
-    print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
-    return "Hello world"
+# @app.route('/world', methods=['GET'])
+# def world():
+#     print(chunk_and_store(r"C:\Users\shaharyar\Documents\VS Code\Topics in LLMs\Project\outline.pdf"))
+#     return "Hello world"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -95,7 +96,7 @@ def index():
                 file_path = download_document(file_id)
                 # chunk the file and add to mongo db
                 # chunk_msg = chunk_and_store(file_path)
-                chunk_msg = chunk_and_store('')
+                chunk_msg = "oops"
 
                 if file_path:
                     send_message_telegram(chat_id, f"Document saved successfully: {chunk_msg}")
@@ -109,11 +110,12 @@ def index():
             elif incoming_que.strip() == '/chatid':
                 send_message_telegram(chat_id, f'Your chat ID is: {chat_id}')
             else:
-                answer = generate_response(incoming_que, llm)
+                # answer = generate_response(incoming_que, llm)
+                pass
                 # send_message_telegram(chat_id, "Echo: " + incoming_que)
         return Response('ok', status=200)
     else:
         return "<h1>GET Request Made</h1>"
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=8000)
