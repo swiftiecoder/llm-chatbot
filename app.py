@@ -16,7 +16,9 @@ GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
 print("STARTING", TELEGRAM_BOT_TOKEN, GOOGLE_API_KEY)
 
 genai.configure(api_key=GOOGLE_API_KEY)
-llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest")
+llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest",
+                            system_instruction="You are a helpful chatbot assistant within a messaging app"
+                            )
 
 def message_parser(message):
     try:

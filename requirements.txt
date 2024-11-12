@@ -5,7 +5,11 @@ pymongo
 langchain
 langchain-google-genai
 langchain-mongodb
+langchain-pinecone
+pinecone
 langchain-community
 python-dotenv
 gunicorn
 pymupdf
+hashlib
+
