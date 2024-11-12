@@ -1,12 +1,9 @@
 ﻿flask
 requests
 pyngrok
-gunicorn
-wfastcgi
-setuptools
+pymongo
 langchain
 langchain-google-genai
 langchain-mongodb
 langchain-community
 python-dotenv
-uuid
