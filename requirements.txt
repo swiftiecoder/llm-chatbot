@@ -11,5 +11,3 @@ langchain-community
 python-dotenv
 gunicorn
 pymupdf
-hashlib
-
