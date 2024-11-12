@@ -3,11 +3,11 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from uuid import uuid4
 import os
 
-load_dotenv()
+# load_dotenv()
 
 # import nltk
 # from nltk.corpus import stopwords
