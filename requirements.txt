@@ -1,5 +1,5 @@
-﻿flask
-requests
+﻿requests
+Flask
 pyngrok
 pymongo
 langchain
