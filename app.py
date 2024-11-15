@@ -2,11 +2,11 @@ import requests
 from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from functions import generate_response, chunk_and_store
-# from dotenv import load_dotenv
+from functions import generate_response, generate_response_with_rag, chunk_and_store
+from dotenv import load_dotenv
 import os
 
-# load_dotenv()
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -19,6 +19,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest",
                             system_instruction="You are a helpful chatbot assistant within a messaging app"
                             )
+
 
 def message_parser(message):
     try:
@@ -77,7 +78,8 @@ def send_message_telegram(chat_id, text):
 def hello():
     # print("In hello")
     try:
-        return generate_response("What is your name?", llm)
+        # return generate_response("What is your name?", llm)
+        return generate_response_with_rag("what is your name", llm)
         # return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
     except Exception as e:
         print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
@@ -126,7 +128,8 @@ def index():
                     return Response('Failed to send chat ID', status=500)
             else:
                 try:
-                    answer = generate_response(incoming_que, llm)
+                    # answer = generate_response(incoming_que, llm)
+                    answer = generate_response_with_rag(incoming_que, llm)
                     send_message_telegram(chat_id, answer)
                 except Exception as e:
                     send_message_telegram(chat_id, f"Error generating or sending response: {e}")
