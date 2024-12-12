@@ -2,7 +2,7 @@ import requests
 from flask import Flask, request, Response, jsonify
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from functions import generate_response, generate_response_with_rag, chunk_and_store
+from functions import generate_response, generate_response_with_rag, chunk_and_store, manage_chat_history, get_chat_history
 from dotenv import load_dotenv
 import os
 
@@ -65,6 +65,7 @@ def download_document(file_id):
     return None
 
 def send_message_telegram(chat_id, text):
+    manage_chat_history(chat_id, text, 'bot')
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     payload = {
         'chat_id': chat_id,
@@ -78,13 +79,14 @@ def send_message_telegram(chat_id, text):
 def hello():
     # print("In hello")
     try:
-        # return generate_response("What is your name?", llm)
-        return generate_response_with_rag("what is your name", llm)
+        return generate_response("What is your name?", llm)
+        # return generate_response_with_rag("what is your name", llm)
         # return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
     except Exception as e:
         print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
     return "Hello world"
 
+    
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -98,6 +100,13 @@ def index():
             return Response('Failed to parse message', status=400)
         
         if chat_id != -1:
+            if incoming_que.strip() and not file_id:
+                try: 
+                    manage_chat_history(chat_id, incoming_que, "user")
+                except Exception as e:
+                    send_message_telegram(chat_id, f"Error managing chat history: {e}")
+                    return Response('Failed to manage chat history', status=500)
+                
             if file_id:
                 # Try downloading the document
                 try:
@@ -140,4 +149,4 @@ def index():
         return "<h1>GET Request Made</h1>"
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='127.0.0.1', port=8000)
