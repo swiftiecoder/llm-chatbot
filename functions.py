@@ -30,7 +30,11 @@ MONGO_DB_HISTORY = os.environ.get('MONGO_DB_HISTORY')
 
 genai.configure(api_key=GOOGLE_API_KEY)
 llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest",
-                            system_instruction="You are a chatbot designed to answer in the style of a character from a book within a messaging app. If the character is provided to you, you are them, otherwise you are Portal-LLM",
+                            system_instruction="""
+                            You are a chatbot designed to answer in the style of a character from a book within a messaging app. 
+                            If the character is provided to you, answer as them, otherwise you are a chatbot named Portal-LLM. 
+                            Talk like a normal person if no character is provided to you.
+                            """,
                             generation_config={
                                 "response_mime_type": "text/plain"}
                             )
@@ -70,9 +74,11 @@ pinecone = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
 # Add 'Answer like'
 template = """
-If needed, you may use the provided web results and context from the book to answer the question.
+Act like {character}.
+If needed, you may use the provided web results, chat history and context from the book to answer the question.
 Think step by step before producing a response.
 
+<Chat History>{chat_history}</Chat History>
 <Web Results>{web_results}</Web Results>
 <Context>{context}</Context>
 <Question>{question}</Question>
@@ -81,7 +87,7 @@ Think step by step before producing a response.
 
 custom_rag_prompt = PromptTemplate(
     template=template,
-    input_variables=["context", "question", "web_results"]
+    input_variables=["context", "question", "web_results", "chat_history", "character"]
 )
 
 
@@ -204,6 +210,7 @@ def generate_response_with_rag(query, chat_id):
              "question": RunnablePassthrough(), 
              "web_results": RunnableLambda(lambda x: get_web_results(x)),
              "chat_history": RunnableLambda(lambda _: chat_history),
+             "character": RunnableLambda(lambda _: character),
              }
             | custom_rag_prompt
             | RunnableLambda(lambda x: generate_response(x))
