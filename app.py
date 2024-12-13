@@ -1,7 +1,5 @@
 import requests
 from flask import Flask, request, Response, jsonify
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from functions import generate_response, generate_response_with_rag, chunk_and_store, manage_chat_history, get_chat_history
 from dotenv import load_dotenv
 import os
@@ -11,15 +9,8 @@ load_dotenv()
 app = Flask(__name__)
 
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-GOOGLE_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-print("STARTING", TELEGRAM_BOT_TOKEN, GOOGLE_API_KEY)
-
-genai.configure(api_key=GOOGLE_API_KEY)
-llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest",
-                            system_instruction="You are a helpful chatbot assistant within a messaging app"
-                            )
-
+# print("STARTING", TELEGRAM_BOT_TOKEN, GOOGLE_API_KEY)
 
 def message_parser(message):
     try:
@@ -79,8 +70,8 @@ def send_message_telegram(chat_id, text):
 def hello():
     # print("In hello")
     try:
-        return generate_response("What is your name?", llm)
-        # return generate_response_with_rag("what is your name", llm)
+        return generate_response_with_rag("Who are you?", 1)
+        # return generate_response("what is your name", llm)
         # return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
     except Exception as e:
         print("OOPS SOMETHING WENT WRONG WITH GENERATE RESPONSE", e)
@@ -114,7 +105,7 @@ def index():
                     if file_path:
                         # Process and store document chunks
                         # Replace "oops" with actual chunking message if implemented
-                        chunk_msg = chunk_and_store(file_path)
+                        chunk_msg = chunk_and_store(file_path, chat_id)
                         send_message_telegram(chat_id, f"Document saved successfully: {chunk_msg}")
                     else:
                         send_message_telegram(chat_id, "Failed to save the document.")
@@ -138,7 +129,7 @@ def index():
             else:
                 try:
                     # answer = generate_response(incoming_que, llm)
-                    answer = generate_response_with_rag(incoming_que, llm)
+                    answer = generate_response_with_rag(incoming_que, chat_id)
                     send_message_telegram(chat_id, answer)
                 except Exception as e:
                     send_message_telegram(chat_id, f"Error generating or sending response: {e}")

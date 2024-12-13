@@ -11,3 +11,4 @@ langchain-community
 python-dotenv
 gunicorn
 pymupdf
+duckduckgo-search
