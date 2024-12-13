@@ -86,7 +86,7 @@ def send_message_telegram(chat_id, text):
 def hello():
     # print("In hello")
     try:
-        return generate_response_with_rag("Who are you?", 1)
+        return generate_response_with_rag("Who are you?", 7194910082)
         # return generate_response("what is your name", llm)
         # return f"{TELEGRAM_BOT_TOKEN} and {GOOGLE_API_KEY}"
     except Exception as e:

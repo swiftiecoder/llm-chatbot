@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
+import json
 from duckduckgo_search import DDGS
 
 load_dotenv()
@@ -40,6 +41,7 @@ llm = genai.GenerativeModel("models/gemini-1.5-flash-8b-latest",
                             )
 
 classifier = genai.GenerativeModel("gemini-1.5-flash-8b-latest",
+                                #    system_instruction="You are a classifier whose job is to extract the subject of a sentence, if there is one.",
                                    generation_config={"response_mime_type": "application/json"})
 
 # Connect to MongoDB
@@ -53,11 +55,13 @@ def handle_character_request(chat_id, query):
     # Step 1: Classify the query
     classification = classify(query)
 
-    if classification.lower() == "none":
+    print("Classification", classification)
+
+    if (classification == None) or (classification and "none" in classification.lower()):
         character = characters_db.find_one({'chat_id': chat_id})
 
         if character and 'last_character' in character:
-            return characters_db['last_character']
+            return character['last_character']
         else:
             return ""
     else:
@@ -74,7 +78,7 @@ pinecone = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
 # Add 'Answer like'
 template = """
-Act like {character}.
+You are {character}. Act and talk like {character} in your responses.
 If needed, you may use the provided web results, chat history and context from the book to answer the question.
 Think step by step before producing a response.
 
@@ -102,19 +106,37 @@ def get_web_results(query):
     except:
         results = DDGS().answer(query)
 
-    print("The results are", results)
+    # print("The results are", results)
     return results
 
 
 def classify(query):
+    print("Attempting to classify:", query)
     try:
         prompt = f"""
-        Return only the name of the entity the prompt asks you to act like.
-        If there isn't explicitly one return 'None', not 'Gemini'.
-        <Query>{query}</Query>.
-        Answer:
+        Rules:
+        1. If the query is an instruction to act like or become a specific character/persona, return that character/persona as the subject.
+        2. If the query does not contain a clear instruction to become someone else, return 'None'.
+        3. Ignore queries about identity or general questions.
+
+        Examples:
+        - "Act like Harry Potter" -> "Harry Potter"
+        - "Pretend to be Sherlock Holmes" -> "Sherlock Holmes"
+        - "Who are you?" -> "None"
+        - "Tell me about yourself" -> "None"
+
+        <Query>{query}</Query>
+
         """
-        return classifier.generate_content(prompt).text
+
+        print(prompt)
+        print(classifier.generate_content(prompt).text)
+
+        # answer = json.loads(classifier.generate_content(prompt).text)
+        # answer =  str(next(iter(answer.values())))
+        
+        answer = classifier.generate_content(prompt).text
+        return answer
     except:
         pass
 
@@ -137,7 +159,8 @@ def initialize_vector_store(chat_id):
         index=pinecone_index,
         embedding=GoogleGenerativeAIEmbeddings(
             google_api_key=GOOGLE_API_KEY,
-            model="models/text-embedding-004"
+            model="models/text-embedding-004",
+            task_type="clustering"
         )
     )
     return vector_store
@@ -197,6 +220,7 @@ def generate_response_with_rag(query, chat_id):
         # print(vector_store)
 
         character = handle_character_request(chat_id, query)
+        print("character after mongodb", character)
         if character == "":
             return "You haven't asked me to act like a character yet. Please choose one"
 
@@ -217,7 +241,18 @@ def generate_response_with_rag(query, chat_id):
             # | StrOutputParser
         )
 
+        prompt = custom_rag_prompt.format(
+            context = format_docs(retriever.invoke(query)[:30]),
+            question = query, 
+            web_results = get_web_results(query),
+            chat_history = chat_history,
+            character =  character,
+        )
+
         result = rag_chain.invoke(query)
+
+        print(prompt)
+        print(result)
         return result
 
     except Exception as e:
@@ -256,7 +291,7 @@ def get_chat_history(chat_id, k=5):
         # Get last k messages from chat history
         chat_session = history_db.find_one(
             {"chat_id": chat_id},
-            {"messages": {"$slice": -k}}  # Get last k messages
+            {"messages": {"$slice": -(k*2)}}  # Get last k messages
         )
 
         if not chat_session or "messages" not in chat_session:
