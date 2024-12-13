@@ -204,7 +204,7 @@ def generate_response_with_rag(query, chat_id):
             {"context": retriever | format_docs,
              "question": RunnablePassthrough(), 
              "web_results": RunnableLambda(lambda x: get_web_results(x)),
-             "chat_history": chat_history,
+             "chat_history": RunnableLambda(lambda _: chat_history),
              }
             | custom_rag_prompt
             | RunnableLambda(lambda x: generate_response(x))
