@@ -3,6 +3,7 @@ from flask import Flask, request, Response, jsonify
 from functions import generate_response, generate_response_with_rag, chunk_and_store, manage_chat_history, get_chat_history
 from dotenv import load_dotenv
 import os
+import threading
 
 load_dotenv()
 
@@ -55,6 +56,21 @@ def download_document(file_id):
         return file_name
     return None
 
+def process_document_async(file_path, chat_id):
+    try:
+        # Process and store document chunks
+        chunk_msg = chunk_and_store(file_path, chat_id)
+        send_message_telegram(chat_id, f"Document processed successfully: {chunk_msg}")
+    except Exception as e:
+        send_message_telegram(chat_id, f"Error processing document: {e}")
+    finally:
+        # Attempt to delete the file 
+        try:
+            os.remove(file_path)
+            print("Deleting", file_path)
+        except Exception as e:
+            send_message_telegram(chat_id, f"Error deleting file: {e}")
+
 def send_message_telegram(chat_id, text):
     manage_chat_history(chat_id, text, 'bot')
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
@@ -103,22 +119,19 @@ def index():
                 try:
                     file_path = download_document(file_id)
                     if file_path:
-                        # Process and store document chunks
-                        # Replace "oops" with actual chunking message if implemented
-                        chunk_msg = chunk_and_store(file_path, chat_id)
-                        send_message_telegram(chat_id, f"Document saved successfully: {chunk_msg}")
+                        # Start an asynchronous thread to process the document
+                        threading.Thread(
+                            target=process_document_async, 
+                            args=(file_path, chat_id), 
+                            daemon=True
+                        ).start()
+                        
+                        # Immediately return a 200 OK response
+                        send_message_telegram(chat_id, "Please wait while the document is being processed")
                     else:
                         send_message_telegram(chat_id, "Failed to save the document.")
                 except Exception as e:
-                    send_message_telegram(chat_id, f"Error handling document download and storage: {e}")
-                
-                # Attempt to delete the file if it was saved
-                if file_path:
-                    try:
-                        os.remove(file_path)
-                        print("Deleting", file_path)
-                    except Exception as e:
-                        send_message_telegram(chat_id, f"Error deleting file: {e}")
+                    send_message_telegram(chat_id, f"Error handling document download: {e}")
 
             elif incoming_que.strip() == '/chatid':
                 try:
