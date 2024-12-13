@@ -67,7 +67,6 @@ def handle_character_request(chat_id, query):
 
 # Initialize Pinecone
 pinecone = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-index_name = "llms-project"
 
 # Add 'Answer like'
 template = """
@@ -126,7 +125,7 @@ def initialize_vector_store(chat_id):
         )
     except:
         pass
-    pinecone_index = pinecone.Index(index_name)
+    pinecone_index = pinecone.Index(str(chat_id))
 
     vector_store = PineconeVectorStore(
         index=pinecone_index,
