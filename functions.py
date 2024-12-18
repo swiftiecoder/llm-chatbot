@@ -104,7 +104,7 @@ def get_web_results(query):
     try:
         results = DDGS().chat(query)  # , model='claude-3-haiku')
     except:
-        results = DDGS().answer(query)
+        results = DDGS().answers(query)
 
     # print("The results are", results)
     return results
@@ -227,12 +227,14 @@ def generate_response_with_rag(query, chat_id):
         # Get chat history with configurable size
         chat_history = get_chat_history(chat_id) if chat_id else "No previous conversation."
 
+        search_term = query if character is "None" else character + " " + query
+
         print(chat_history)
 
         rag_chain = (
             {"context": retriever | format_docs,
              "question": RunnablePassthrough(), 
-             "web_results": RunnableLambda(lambda x: get_web_results(x)),
+             "web_results": RunnableLambda(lambda x: get_web_results(search_term)),
              "chat_history": RunnableLambda(lambda _: chat_history),
              "character": RunnableLambda(lambda _: character),
              }
